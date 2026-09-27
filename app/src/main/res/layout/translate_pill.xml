@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Floating translate pill shown inside the suggestion strip / toolbar area while
+    live translate is active. Colors are applied at runtime from the keyboard theme.
+    Layout is deliberately flat (no nested heavy layouts) so showing it never relayouts the keyboard.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/translate_pill_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingTop="3dp"
+    android:paddingBottom="3dp"
+    android:paddingStart="4dp"
+    android:paddingEnd="4dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
+
+    <LinearLayout
+        android:id="@+id/translate_pill_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="@drawable/bg_translate_pill">
+
+        <ImageButton
+            android:id="@+id/translate_pill_icon"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="2dp"
+            android:padding="8dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_translate"
+            android:contentDescription="@string/translate_refresh" />
+
+        <TextView
+            android:id="@+id/translate_pill_source"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:minWidth="34dp"
+            android:gravity="center"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:singleLine="true"
+            android:textSize="12sp"
+            android:ellipsize="end"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/translate_source_language" />
+
+        <TextView
+            android:id="@+id/translate_pill_arrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="1dp"
+            android:paddingEnd="1dp"
+            android:text="→"
+            android:textSize="12sp"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/translate_pill_target"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:minWidth="30dp"
+            android:gravity="center"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:singleLine="true"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/translate_target_language" />
+
+        <ProgressBar
+            android:id="@+id/translate_pill_progress"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginStart="2dp"
+            android:visibility="gone"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/translate_pill_status"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:paddingStart="4dp"
+            android:paddingEnd="6dp"
+            android:singleLine="true"
+            android:textSize="11sp"
+            android:alpha="0.75"
+            android:ellipsize="end"
+            android:maxWidth="96dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/translate_live_toggle"
+            android:accessibilityLiveRegion="polite" />
+
+        <TextView
+            android:id="@+id/translate_pill_preview"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical|start"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:singleLine="true"
+            android:textSize="13sp"
+            android:ellipsize="end" />
+
+        <ImageButton
+            android:id="@+id/translate_pill_insert"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="9dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_check_bold"
+            android:contentDescription="@string/translate_insert" />
+
+        <ImageButton
+            android:id="@+id/translate_pill_close"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginEnd="2dp"
+            android:padding="9dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_close"
+            android:contentDescription="@string/translate_close" />
+    </LinearLayout>
+</FrameLayout>

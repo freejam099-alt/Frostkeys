@@ -155,7 +155,7 @@ enum class ToolbarMode {
 val toolbarKeyStrings = entries.associateWithTo(EnumMap(ToolbarKey::class.java)) { it.toString().lowercase(Locale.US) }
 
 val defaultToolbarPref by lazy {
-    val default = listOf(SETTINGS, VOICE, CLIPBOARD, UNDO, REDO, SELECT_WORD, COPY, PASTE, LEFT, RIGHT, RESIZE)
+    val default = listOf(SETTINGS, VOICE, CLIPBOARD, UNDO, REDO, SELECT_WORD, COPY, PASTE, LEFT, RIGHT, RESIZE, TRANSLATE)
     val others = entries.filterNot { it in default || it == CLOSE_HISTORY }
     default.joinToString(Separators.ENTRY) { it.name + Separators.KV + true } + Separators.ENTRY +
             others.joinToString(Separators.ENTRY) { it.name + Separators.KV + false }
@@ -180,9 +180,11 @@ private fun upgradeToolbarPref(prefs: SharedPreferences, pref: String, default: 
     splitDefault.forEach { entry ->
         val keyWithSeparator = entry.substringBefore(Separators.KV) + Separators.KV
         if (list.none { it.startsWith(keyWithSeparator) }) {
-            val enableResizeByDefault = pref == Settings.PREF_TOOLBAR_KEYS &&
-                entry.substringBefore(Separators.KV) == RESIZE.name
-            list.add("$keyWithSeparator$enableResizeByDefault")
+            // newly added keys are enabled by default when they are user-facing features
+            val enableByDefault = pref == Settings.PREF_TOOLBAR_KEYS &&
+                (entry.substringBefore(Separators.KV) == RESIZE.name ||
+                    entry.substringBefore(Separators.KV) == TRANSLATE.name)
+            list.add("$keyWithSeparator$enableByDefault")
         }
     }
     // likely not needed, but better prepare for possibility of key removal

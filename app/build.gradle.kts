@@ -54,12 +54,27 @@ android {
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
 
+    // Release signing comes from CI environment variables (see build workflow):
+    // no secret/keystore is stored in source code. When the variables are absent
+    // (local builds), the release build stays unsigned exactly as before.
+    signingConfigs {
+        if (!System.getenv("FROSTKEYS_KEYSTORE_FILE").isNullOrBlank()) {
+            create("release") {
+                storeFile = file(System.getenv("FROSTKEYS_KEYSTORE_FILE"))
+                storePassword = System.getenv("FROSTKEYS_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("FROSTKEYS_KEY_ALIAS")
+                keyPassword = System.getenv("FROSTKEYS_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = false
             isDebuggable = false
             isJniDebuggable = false
+            signingConfig = signingConfigs.findByName("release")
         }
         create("nouserlib") { // same as release, but does not allow the user to provide a library
             isMinifyEnabled = true

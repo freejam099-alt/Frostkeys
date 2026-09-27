@@ -1,7 +1,10 @@
-name: Build debug APK
+name: Build Release APK
 
 on:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -19,17 +22,92 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v3
 
+      # Keeps the release keystore between builds so every published APK can be
+      # installed as an upgrade of the previous one (same signature).
+      - name: Restore release keystore
+        uses: actions/cache@v4
+        with:
+          path: release.keystore
+          key: frostkeys-release-keystore-v1
+
+      - name: Generate release keystore if missing
+        run: |
+          if [ ! -f release.keystore ]; then
+            keytool -genkeypair \
+              -keystore release.keystore \
+              -alias frostkeys \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$FROSTKEYS_KEYSTORE_PASSWORD" \
+              -keypass "$FROSTKEYS_KEY_PASSWORD" \
+              -dname "CN=FrostKeys CI, OU=FrostKeys, O=FrostKeys, L=CI, S=CI, C=ID"
+          fi
+        env:
+          FROSTKEYS_KEYSTORE_PASSWORD: frostkeys-ci
+          FROSTKEYS_KEY_PASSWORD: frostkeys-ci
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleRelease
+        env:
+          FROSTKEYS_KEYSTORE_FILE: ${{ github.workspace }}/release.keystore
+          FROSTKEYS_KEYSTORE_PASSWORD: frostkeys-ci
+          FROSTKEYS_KEY_ALIAS: frostkeys
+          FROSTKEYS_KEY_PASSWORD: frostkeys-ci
 
-      - name: Upload APK
+      - name: Verify APK signature and fingerprint
+        run: |
+          set -e
+          ls -la app/build/outputs/apk/release/
+          test -f app/build/outputs/apk/release/FrostKeys_2.5.7-release.apk
+          cp app/build/outputs/apk/release/FrostKeys_2.5.7-release.apk FrostKeys-2.5.7-release.apk
+          sha256sum FrostKeys-2.5.7-release.apk | tee SHA256.txt
+          # make sure the output really is a signed APK before publishing
+          unzip -l FrostKeys-2.5.7-release.apk | sed -n '1,6p'
+          APKSIGNER=$(find "${ANDROID_HOME}/build-tools" -name apksigner 2>/dev/null | sort -V | tail -1)
+          if [ -z "$APKSIGNER" ]; then echo "::error::apksigner not found"; exit 1; fi
+          "$APKSIGNER" verify --print-certs FrostKeys-2.5.7-release.apk
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: HeliBoard-debug
-          path: app/build/outputs/apk/debug/*-debug*.apk
+          name: FrostKeys-Release
+          path: |
+            FrostKeys-2.5.7-release.apk
+            SHA256.txt
+
+      # The artifact above is a ZIP container; this release attaches the raw .apk
+      # so users can download and install it directly without unpacking anything.
+      - name: Publish GitHub Release with direct APK download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          {
+            echo "FrostKeys 2.5.7 - release build with Live Translate."
+            echo
+            echo "Download **FrostKeys-2.5.7-release.apk** (raw APK, no ZIP wrapper) and open it to install."
+            echo
+            echo '```'
+            cat SHA256.txt
+            echo '```'
+            echo
+            echo "If the installer reports a corrupt/parse error, compare the SHA-256 above with your downloaded file:"
+            echo
+            echo "    sha256sum FrostKeys-2.5.7-release.apk"
+            echo
+            echo "Notes:"
+            echo "- If an official FrostKeys build is installed, uninstall it first (different signature)."
+            echo "- The \`.debug\` package is a separate app and can stay installed."
+            echo "- If a previous CI build fails to upgrade, uninstall it once (keystore can be regenerated)."
+          } > RELEASE_NOTES.md
+          gh release create "build-${{ github.run_number }}" \
+            FrostKeys-2.5.7-release.apk SHA256.txt \
+            --repo "${{ github.repository }}" \
+            --title "FrostKeys 2.5.7 (Release)" \
+            --notes-file RELEASE_NOTES.md \
+            --latest
 
       - name: Archive reports for failed job
         uses: actions/upload-artifact@v4
